@@ -1,0 +1,56 @@
+# This pipeline builds frontend-app and publishes it as a artifact
+
+variables:
+  uiSource: "$(pwd)/percept-testdrive/frontend-app"
+  uiBuild: "$(uiSource)/build"
+  buildSuffix: "$(Build.BuildNumber)"
+
+trigger:
+  batch: true
+  branches:
+    include:
+      - releases/*
+      - main
+
+  paths:
+    include:
+      - percept-testdrive/frontend-app
+      - percept-testdrive/pipelines/build-frontend.yml
+      - percept-testdrive/pipelines/deploy-frontend.yml
+
+pool: default
+jobs:
+  - job: Job_1
+    displayName: Agent job 1
+    pool:
+      vmImage: windows-2019
+    steps:
+      - checkout: self
+
+      - task: UseNode@1
+        displayName: Use Node 12.x
+        inputs:
+          version: 12.x
+
+      - task: Npm@1
+        displayName: npm ci
+        inputs:
+          command: 'ci'
+          workingDir: 'percept-testdrive/frontend-app'
+          verbose: false
+
+      # creating the zip for app deployment
+      - task: ArchiveFiles@2
+        displayName: ArchiveFiles
+        inputs:
+          rootFolderOrFile: percept-testdrive/frontend-app
+          includeRootFolder: false
+          archiveFile: $(Build.ArtifactStagingDirectory)/percept-testdrive-app.zip
+          archiveType: "zip"
+          replaceExistingArchive: true
+
+      - task: PublishPipelineArtifact@1
+        displayName: Publish Pipeline Artifact
+        inputs:
+          path: $(Build.ArtifactStagingDirectory)
+          artifactName: aptd_app

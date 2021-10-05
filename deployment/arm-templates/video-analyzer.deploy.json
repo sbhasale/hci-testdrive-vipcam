@@ -1,0 +1,289 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "namePrefix": {
+            "defaultValue": "percepthci",
+            "minLength": 3,
+            "maxLength": 23,
+            "type": "String",
+            "metadata": {
+                "description": "Used to qualify the names of all of the resources created in this template."
+            }
+        },
+        "_artifactsLocation":{
+            "type": "String",
+            "metadata": {
+                "description": "the blob storage path."
+            }
+        },
+        "PolicyType": {
+            "defaultValue": "Microsoft.VideoAnalyzer.JwtAuthentication",
+            "type": "String",
+            "metadata": {
+                "description": "Type of policy"
+            }
+        },
+        "edgeModuleName": {
+            "defaultValue": "avaedge",
+            "type": "String",
+            "metadata": {
+                "description": "The edge module identity used to provision an authentication token for the edge device."
+            }
+        },
+        "resourceTags": {
+            "defaultValue": {
+                "sample": "percept-hci-spatialanalysis-testdrive"
+            },
+            "type": "Object"
+        },
+        "baseTime": {
+            "defaultValue": "[utcNow('u')]",
+            "type": "String"
+        }
+    },
+    "variables": {
+        "storageAccountName": "[concat(parameters('namePrefix'),uniqueString(resourceGroup().id))]",
+        "accountName": "[concat(parameters('namePrefix'),uniqueString(resourceGroup().id))]",
+        "edgeModuleName": "[parameters('edgeModuleName')]",
+        "PolicyType": "[parameters('PolicyType')]",
+        "accesspolicyName": "[parameters('edgeModuleName')]",
+        "tokenExpiration": {
+            "expirationDate": "[dateTimeAdd(parameters('baseTime'), 'P7D', 'yyyy-MM-ddTHH:mm:ss+00:00')]"
+        },
+        "managedIdentityName": "[concat(parameters('namePrefix'),'-',resourceGroup().name,'-storage-access-identity')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2020-10-01",
+            "name": "deploy-storage-and-identity",
+            "properties": {
+                "mode": "Incremental",
+                "expressionEvaluationOptions": {
+                    "scope": "Inner"
+                },
+                "parameters": {
+                    "namePrefix": {
+                        "value": "[parameters('namePrefix')]"
+                    },
+                    "managedIdentityName": {
+                        "value": "[variables('managedIdentityName')]"
+                    }
+                },
+                "template": {
+                    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+                    "contentVersion": "1.0.0.0",
+                    "parameters": {
+                        "namePrefix": {
+                            "type": "string"
+                        },
+                        "managedIdentityName": {
+                            "type": "string"
+                        }
+                    },
+                    "variables": {
+                        "storageAccountName": "[concat(parameters('namePrefix'),uniqueString(resourceGroup().id))]",
+                        "managedIdentityName": "[parameters('managedIdentityName')]",
+                        "storageBlobDataContributorAssignment": "[guid('Storage Blob Data Contributor',variables('managedIdentityName'))]",
+                        "storageBlobDataContributorDefinitionId": "[concat(resourceGroup().id, '/providers/Microsoft.Authorization/roleDefinitions/', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')]",
+                        "readerAssignment": "[guid('Reader',variables('managedIdentityName'))]",
+                        "readerDefinitionId": "[concat(resourceGroup().id, '/providers/Microsoft.Authorization/roleDefinitions/', 'acdd72a7-3385-48ef-bd42-f606fba81ae7')]"
+                    },
+                    "resources": [
+                        {
+                            "type": "Microsoft.ManagedIdentity/userAssignedIdentities",
+                            "name": "[variables('managedIdentityName')]",
+                            "apiVersion": "2015-08-31-preview",
+                            "location": "[resourceGroup().location]"
+                        },
+                        {
+                            "type": "Microsoft.Storage/storageAccounts",
+                            "apiVersion": "2019-04-01",
+                            "name": "[variables('storageAccountName')]",
+                            "location": "[resourceGroup().location]",
+                            "sku": {
+                                "name": "Standard_LRS"
+                            },
+                            "kind": "StorageV2",
+                            "properties": {
+                                "accessTier": "Hot"
+                            }
+                        },
+                        {
+                            "name": "[concat(variables('storageAccountName'), '/Microsoft.Authorization/', variables('storageBlobDataContributorAssignment'))]",
+                            "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
+                            "apiVersion": "2021-04-01-preview",
+                            "dependsOn": [
+                                "[variables('managedIdentityName')]",
+                                "[variables('storageAccountName')]"
+                            ],
+                            "properties": {
+                                "roleDefinitionId": "[variables('storageBlobDataContributorDefinitionId')]",
+                                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities',variables('managedIdentityName')), '2018-11-30').principalId]",
+                                "principalType": "ServicePrincipal"
+                            }
+                        },
+                        {
+                            "name": "[concat(variables('storageAccountName'), '/Microsoft.Authorization/', variables('readerAssignment'))]",
+                            "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
+                            "apiVersion": "2021-04-01-preview",
+                            "dependsOn": [
+                                "[variables('managedIdentityName')]",
+                                "[variables('storageAccountName')]"
+                            ],
+                            "properties": {
+                                "roleDefinitionId": "[variables('readerDefinitionId')]",
+                                "principalId": "[reference(resourceId('Microsoft.ManagedIdentity/userAssignedIdentities',variables('managedIdentityName')), '2018-11-30').principalId]",
+                                "principalType": "ServicePrincipal"
+                            }
+                        },
+                        {
+                            "type": "Microsoft.Resources/deploymentScripts",
+                            "comments": "adding a delay to allow for the role assignement to propagate through storage",
+                            "dependsOn": [
+                                "[variables('managedIdentityName')]",
+                                "[variables('storageAccountName')]"
+                            ],
+                            "apiVersion": "2020-10-01",
+                            "name": "managed-identity-role-assignmentComplete",
+                            "location": "[resourceGroup().location]",
+                            "kind": "AzurePowerShell",
+                            "properties": {
+                                "azPowerShellVersion": "5.0",
+                                "forceUpdateTag": "1.0",
+                                "scriptContent": "Start-Sleep -s 150",
+                                "timeout": "PT30M",
+                                "cleanupPreference": "Always",
+                                "retentionInterval": "PT1H"
+                            }
+                        }
+                    ],
+                    "outputs": {}
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Media/videoAnalyzers",
+            "apiVersion": "2021-05-01-preview",
+            "name": "[variables('accountName')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "deploy-storage-and-identity"
+            ],
+            "tags": "[parameters('resourceTags')]",
+            "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                    "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities',variables('managedIdentityName'))]": {}
+                }
+            },
+            "properties": {
+                "storageAccounts": [
+                    {
+                        "id": "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]",
+                        "identity": {
+                            "userAssignedIdentity": "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities',variables('managedIdentityName'))]"
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.Media/videoAnalyzers/edgeModules",
+            "apiVersion": "2021-05-01-preview",
+            "name": "[concat(variables('accountName'),'/',variables('edgeModuleName'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Media/videoAnalyzers', variables('accountName'))]"
+            ]
+        },
+        {
+            "type": "Microsoft.Resources/deploymentScripts",
+            "apiVersion": "2020-10-01",
+            "name": "GenerateJWTToken",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Resources/deployments', 'deploy-storage-and-identity')]"
+            ],
+            "kind": "AzureCLI",
+            "identity": {
+                "type": "userAssigned",
+                "userAssignedIdentities": {
+                    "[resourceId('Microsoft.ManagedIdentity/userAssignedIdentities',variables('managedIdentityName'))]": {}
+                }
+            },
+            "properties": {
+                "forceUpdateTag": "1",
+                "containerSettings": {},
+                "azCliVersion": "2.0.80",
+                "environmentVariables": [
+                    {
+                        "name": "JWT_TOKEN_PACKAGE",
+                        "value": "[uri(parameters('_artifactsLocation'), 'jwt-token-issuer.zip')]"
+                    }
+                ],
+                "primaryScriptUri": "[uri(parameters('_artifactsLocation'), 'generate-token.sh')]",
+                "timeout": "PT10M",
+                "cleanupPreference": "OnSuccess",
+                "retentionInterval": "P1D"
+            }
+        },
+        {
+            "type": "Microsoft.Media/videoAnalyzers/accessPolicies",
+            "apiVersion": "2021-05-01-preview",
+            "name": "[concat(variables('accountName'),'/',variables('accesspolicyName'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Media/videoAnalyzers', variables('accountName'))]",
+                "[resourceId('Microsoft.Resources/deploymentScripts', 'GenerateJWTToken')]"
+            ],
+            "properties": {
+                "role": "Reader",
+                "authentication": {
+                    "@type": "[concat('#',variables('Policytype'))]",
+                    "issuers": [
+                        "[reference('GenerateJWTToken').outputs.Issuer]"
+                    ],
+                    "audiences": [
+                        "[reference('GenerateJWTToken').outputs.Audience]"
+                    ],
+                    "claims": [],
+                    "keys": [
+                        {
+                            "@type": "#Microsoft.VideoAnalyzer.RsaTokenKey",
+                            "kid": "[reference('GenerateJWTToken').outputs.KeyId]",
+                            "alg": "RS256",
+                            "n": "[reference('GenerateJWTToken').outputs.RSAKeyModulus]",
+                            "e": "[reference('GenerateJWTToken').outputs.RSAKeyExponent]"
+                        }
+                    ]
+                }
+            }
+        }
+    ],
+    "outputs": {
+        "accountId": {
+            "type": "String",
+            "value": "[resourceId('Microsoft.Media/videoAnalyzers', variables('accountName'))]"
+        },
+        "edgeModuleName": {
+            "type": "String",
+            "value": "[variables('edgeModuleName')]"
+        },
+        "storageAccountName": {
+            "type": "String",
+            "value": "[variables('storageAccountName')]"
+        },
+        "jwtToken": {
+            "type": "String",
+            "value": "[reference('GenerateJWTToken').outputs.JwtToken]"
+        },
+        "clientEndpointUrl": {
+            "type": "string",
+            "value": "[first(reference(resourceId('Microsoft.Media/videoAnalyzers', variables('accountName'))).endpoints).endpointUrl]"
+        },
+        "provisioningToken": {
+            "type": "String",
+            "value": "[listProvisioningToken(resourceId('Microsoft.Media/videoAnalyzers/edgeModules', variables('accountName'), variables('edgeModuleName')),'2021-05-01-preview',variables('tokenExpiration')).token]"
+        }
+    }
+}
