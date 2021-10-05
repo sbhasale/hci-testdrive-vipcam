@@ -1,0 +1,32 @@
+FROM nvidia/cuda:11.2.0-devel-ubuntu18.04
+
+WORKDIR /app
+
+ENV NVIDIA_DRIVER_CAPABILITIES=video,compute,utility
+ARG DEBIAN_FRONTEND=noninteractive
+ENV TZ=America/Los_Angeles
+
+RUN apt-get update && apt-get install git build-essential yasm cmake libtool libc6 libc6-dev unzip curl wget libnuma1 libnuma-dev pkgconf python3-pip -y
+
+RUN git clone https://git.videolan.org/git/ffmpeg/nv-codec-headers.git && \
+    cd nv-codec-headers && make install PREFIX=/usr && cd -
+
+WORKDIR /app
+
+RUN git clone https://git.ffmpeg.org/ffmpeg.git ffmpeg/
+
+WORKDIR /app/ffmpeg
+
+RUN ./configure --enable-nonfree --enable-cuda-sdk --enable-cuda --enable-nvenc --enable-nvdec --enable-cuvid --enable-libnpp --extra-cflags=-I/usr/local/cuda/include --extra-ldflags=-L/usr/local/cuda/lib64 && \
+    make -j 8 && \
+    make install
+
+WORKDIR /app
+
+COPY requirements.txt ./
+
+RUN pip3 install -r requirements.txt
+
+COPY . .
+
+CMD [ "python3", "-u", "./main.py" ]

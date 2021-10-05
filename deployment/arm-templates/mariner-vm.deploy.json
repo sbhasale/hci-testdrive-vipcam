@@ -1,0 +1,232 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "vmName": {
+            "type": "String"
+        },
+        "resourceTag": {
+            "type": "object",
+            "defaultValue": {
+                "sample": "percept-hci-spatialanalysis-testdrive"
+            }
+        },
+        "virtualMachineSize": {
+            "type": "string",
+            "defaultValue": "Standard_NC4as_T4_v3"
+        },
+        "managedIdentityName": {
+            "type": "string"
+
+        },
+        "identityresourcegroup": {
+            "type": "string"
+
+        },
+        "_artifactsLocation": {
+            "type": "string"
+        }
+    },
+    "functions": [],
+    "variables": {
+        "vnetName": "[concat(parameters('vmName'),'-vnet')]",
+        "pipName": "[concat(parameters('vmName'),'-pip')]",
+
+        "nsgName": "[concat(parameters('vmName'),'-nsg')]",
+        "nicName": "[concat(parameters('vmName'),'-nic')]",
+
+        "diskname": "[concat(parameters('vmName'),'PerceptHCIDisk')]"
+
+
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Compute/disks",
+            "apiVersion": "2019-07-01",
+            "name": "[variables('diskName')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Premium_LRS",
+                "tier": "Premium"
+            },
+            "properties": {
+                "osType": "Linux",
+                "hyperVGeneration": "V2",
+                "creationData": {
+                    "createOption": "Upload",
+                    "uploadSizeBytes": 74920755712
+                },
+                "diskIOPSReadWrite": 240,
+                "diskMBpsReadWrite": 50,
+                "encryption": {
+                    "type": "EncryptionAtRestWithPlatformKey"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Resources/deploymentScripts",
+            "apiVersion": "2019-10-01-preview",
+            "name": "Scriptforcopy",
+            "dependsOn": [
+                "[variables('diskName')]"
+            ],
+            "location": "[resourceGroup().location]",
+            "kind": "AzureCLI",
+            "identity": {
+                "type": "UserAssigned",
+                "userAssignedIdentities": {
+                    "[concat(subscription().id,'/resourceGroups/', parameters('identityresourcegroup'),'/providers/Microsoft.ManagedIdentity/userAssignedIdentities/',parameters('managedIdentityName'))]": {}
+                }
+            },
+            "properties": {
+                "forceUpdateTag": "1",
+                "azCliVersion": "2.9.1",
+                "primaryScriptUri": "[concat(parameters('_artifactsLocation'),'disk-setup.sh')]",
+                "environmentVariables": [
+                    {
+                        "name": "RESOURCE_GROUP_DEVICE",
+                        "value": "[resourceGroup().name]"
+                    },
+                    {
+                        "name": "DISK_NAME",
+                        "value": "[variables('diskName')]"
+                    }
+
+                ],
+                "retentionInterval": "P1D",
+                "timeout": "PT15M",
+                "containerSettings": {},
+                "cleanupPreference": "OnSuccess"
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkInterfaces",
+            "comments": "Nic.",
+            "apiVersion": "2020-08-01",
+            "name": "[variables('nicName')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "public-ip-for-vm",
+                        "properties": {
+                            "privateIPAddress": "10.0.0.4",
+                            "privateIPAllocationMethod": "Dynamic",
+                            "subnet": {
+                                "id": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnetName')), '/subnets/default')]"
+                            },
+                            "primary": true,
+                            "privateIPAddressVersion": "IPv4",
+                            "publicIPAddress": {
+                                "id": "[resourceId(resourceGroup().name, 'Microsoft.Network/publicIpAddresses', variables('pipName'))]"
+                            }
+                        }
+                    }
+                ],
+                "networkSecurityGroup": {
+                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('nsgName'))]"
+                }
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2020-08-01",
+            "name": "[variables('nsgName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+
+            },
+            "tags": "[parameters('resourceTag')]"
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "comments": "This vnet will host the IoT Edge device.",
+            "apiVersion": "2019-06-01",
+            "name": "[variables('vnetName')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.0.0.0/26"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "default",
+                        "properties": {
+                            "addressPrefix": "10.0.0.0/27"
+                        }
+                    }
+
+                ]
+            },
+            "tags": "[parameters('resourceTag')]"
+        },
+        {
+            "type": "Microsoft.Network/publicIpAddresses",
+            "comments": "This is the public IP address to connect to the VM.",
+            "apiVersion": "2019-06-01",
+            "name": "[variables('pipName')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Static"
+            },
+            "tags": "[parameters('resourceTag')]"
+        },
+        {
+            "type": "Microsoft.Compute/virtualMachines",
+            "apiVersion": "2021-03-01",
+            "name": "[parameters('VMName')]",
+            "location": "[resourceGroup().location]",
+            "tags": {},
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]",
+                "[resourceId('Microsoft.Compute/disks', variables('diskname'))]",
+                "Scriptforcopy"
+            ],
+
+            "properties": {
+                "hardwareProfile": {
+                    "vmSize": "[parameters('virtualMachineSize')]"
+                },
+                "storageProfile": {
+                    "osDisk": {
+                        "osType": "Linux",
+                        "name": "[variables('diskName')]",
+                        "createOption": "Attach",
+                        "caching": "ReadWrite",
+                        "managedDisk": {
+                            "storageAccountType": "Premium_LRS",
+                            "id": "[concat(subscription().id,'/resourceGroups/', resourceGroup().name,'/providers/Microsoft.Compute/disks/', variables('diskName'))]"
+                        }
+
+                    }
+                },
+                "networkProfile": {
+                    "networkInterfaces": [
+                        {
+                            "id": "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]"
+                        }
+                    ]
+                },
+                "diagnosticsProfile": {
+                    "bootDiagnostics": {
+                        "enabled": true
+                    }
+                }
+
+            }
+        }
+
+
+
+    ],
+    "outputs": {}
+}
