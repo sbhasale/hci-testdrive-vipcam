@@ -56,14 +56,30 @@
               "createOptions": "{\"ExposedPorts\":{\"80/tcp\":{},\"5001/tcp\":{}},\"Env\":[\"MJPEG_OUTPUT=1\",\"GST_CONFIG_FILE=inference.txt\",\"GST_CLASSIFICATION_FILES=car_color.txt,car_type.txt\",\"GST_TRACKER_FILE=tracker.txt\"],\"HostConfig\":{\"PortBindings\":{\"80/tcp\":[{\"HostPort\":\"8080\"}],\"5001/tcp\":[{\"HostPort\":\"5001\"}]},\"LogConfig\":{\"Type\":\"\",\"Config\":{\"max-size\":\"10m\",\"max-file\":\"10\"}},\"IpcMode\":\"host\",\"Runtime\":\"nvidia\"}}"
             }
           },
-          "rtspsim": {
+          "vipcam": {
             "version": "1.0",
             "type": "docker",
             "status": "running",
             "restartPolicy": "always",
             "settings": {
-              "image": "mcr.microsoft.com/lva-utilities/rtspsim-live555:1.2",
-              "createOptions": "{\"HostConfig\":{\"LogConfig\":{\"Type\":\"\",\"Config\":{\"max-size\":\"10m\",\"max-file\":\"10\"}},\"Binds\":[\"$VIDEO_INPUT_FOLDER_ON_DEVICE:/live/mediaServer/media\"]}}"
+              "image": "containerregistryswapnil.azurecr.io/vipcam:latest",
+              "createOptions": {
+                "Env": [
+                    "VIPCAM_VIDEO_FILE_PATH=/vipcamvideos/cafeteria.mkv"
+                ],
+                "HostConfig": {
+                    "LogConfig": {
+                        "Type": "",
+                        "Config": {
+                            "max-size": "10m",
+                            "max-file": "10"
+                        }
+                    },
+                    "Binds": [
+                        "$VIDEO_INPUT_FOLDER_ON_DEVICE:/vipcamvideos/"
+                    ]
+                }
+              } 
             }
           }
         }

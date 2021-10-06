@@ -7,7 +7,7 @@
         "parameters": [
             {
                 "name": "rtspUrl",
-                "value": "rtsp://rtspsim:554/media/cafeteria.mkv"
+                "value": "rtsp://vipcam:8554/vipcam"
             },
             {
                 "name": "rtspUserName",
