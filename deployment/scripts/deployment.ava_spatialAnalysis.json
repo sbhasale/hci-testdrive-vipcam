@@ -23,7 +23,7 @@
                         "type": "docker",
                         "settings": {
                             "image": "mcr.microsoft.com/azureiotedge-agent:1.1",
-                            "createOptions": {}
+                            "createOptions": "{}"
                         }
                     },
                     "edgeHub": {
@@ -49,23 +49,7 @@
                         "restartPolicy": "always",
                         "settings": {
                             "image": "mcr.microsoft.com/media/video-analyzer:1",
-                            "createOptions": {
-                                "HostConfig": {
-                                    "LogConfig": {
-                                        "Type": "",
-                                        "Config": {
-                                            "max-size": "10m",
-                                            "max-file": "10"
-                                        }
-                                    },
-                                    "Binds": [
-                                        "$VIDEO_OUTPUT_FOLDER_ON_DEVICE:/var/media/",
-                                        "$APPDATA_FOLDER_ON_DEVICE:/var/lib/videoanalyzer"
-                                    ],
-                                    "IpcMode": "host",
-                                    "ShmSize": 1536870912
-                                }
-                            }
+                            "createOptions": "{\"HostConfig\":{\"LogConfig\":{\"Type\":\"\",\"Config\":{\"max-size\":\"10m\",\"max-file\":\"10\"}},\"Binds\":[\"$VIDEO_OUTPUT_FOLDER_ON_DEVICE:/var/media/\",\"$APPDATA_FOLDER_ON_DEVICE:/var/lib/videoanalyzer\"],\"IpcMode\":\"host\",\"ShmSize\":1536870912}}"
                         },
                         "env": {
                             "LOCAL_USER_ID": {
