@@ -250,7 +250,7 @@
       ],
       "properties": {
         "templateLink": {
-          "uri": "[concat(variables('_artifactsLocation'),'video-analyzer.deploy.json',variables('_artifactsLocationSasToken'))]"
+          "uri": "[concat('https://raw.githubusercontent.com/sbhasale/hci-testdrive-vipcam/main/deployment/arm-templates/','video-analyzer.deploy.json',variables('_artifactsLocationSasToken'))]"
         },
         "mode": "Incremental",
         "parameters": {
@@ -258,7 +258,7 @@
             "value": "[variables('namePrefix')]"
           },
           "_artifactsLocation": {
-            "value": "[variables('_artifactsLocation')]"
+            "value": "https://raw.githubusercontent.com/sbhasale/hci-testdrive-vipcam/main/deployment/arm-templates/"
           }
         }
       }
@@ -274,7 +274,7 @@
       ],
       "properties": {
         "templateLink": {
-          "uri": "[concat(variables('_artifactsLocation'),'iot.deploy.json',variables('_artifactsLocationSasToken'))]"
+          "uri": "[concat('https://raw.githubusercontent.com/sbhasale/hci-testdrive-vipcam/main/deployment/arm-templates/','iot.deploy.json',variables('_artifactsLocationSasToken'))]"
         },
         "mode": "Incremental",
         "parameters": {
@@ -312,7 +312,7 @@
         },
         "parameters": {
           "_artifactsLocation": {
-            "value": "[variables('_artifactsLocation')]"
+            "value": "https://raw.githubusercontent.com/sbhasale/hci-testdrive-vipcam/main/deployment/arm-templates/"
           },
           "managedIdentityId": {
             "value": "[variables('managedIdentityId')]"
@@ -380,7 +380,7 @@
               "properties": {
                 "forceUpdateTag": "[parameters('baseTime')]",
                 "azCliVersion": "2.20.0",
-                "primaryScriptUri": "[concat(parameters('_artifactsLocation'),'iot-edge-setup.sh',parameters('_artifactsLocationSasToken'))]",
+                "primaryScriptUri": "[concat('https://raw.githubusercontent.com/sbhasale/hci-testdrive-vipcam/main/deployment/scripts/','iot-edge-setup.sh',parameters('_artifactsLocationSasToken'))]",
                 "environmentVariables": [
                   {
                     "name": "IOTHUB",
@@ -396,7 +396,7 @@
                   },
                   {
                     "name": "MARINER_VM_FILE_URL",
-                    "value": "[uri(parameters('_artifactsLocation'), 'mariner-vm-init.sh')]"
+                    "value": "[uri('https://raw.githubusercontent.com/sbhasale/hci-testdrive-vipcam/main/deployment/scripts/', 'mariner-vm-init.sh')]"
                   }
                 ],
                 "retentionInterval": "P1D",
@@ -492,7 +492,7 @@
       "resourceGroup": "[variables('VMResourceGroup')]",
       "properties": {
         "templateLink": {
-          "uri": "[concat(variables('_artifactsLocation'),'mariner-vm.deploy.json',variables('_artifactsLocationSasToken'))]"
+          "uri": "[concat('https://raw.githubusercontent.com/sbhasale/hci-testdrive-vipcam/main/deployment/arm-templates/','mariner-vm.deploy.json',variables('_artifactsLocationSasToken'))]"
         },
         "mode": "Incremental",
         "parameters": {
@@ -509,7 +509,7 @@
             "value": "[parameters('resourceGroup')]"
           },
           "_artifactsLocation": {
-            "value": "[variables('_artifactsLocation')]"
+            "value": "https://raw.githubusercontent.com/sbhasale/hci-testdrive-vipcam/main/deployment/arm-templates/"
           }
           
         }
@@ -538,7 +538,7 @@
             "value": "[variables('managedIdentityId')]"
           },
           "_artifactsLocation": {
-            "value": "[variables('_artifactsLocation')]"
+            "value": "https://raw.githubusercontent.com/sbhasale/hci-testdrive-vipcam/main/deployment/scripts/"
           },
           "_artifactsLocationSasToken": {
             "value": "[variables('_artifactsLocationSasToken')]"
@@ -646,14 +646,14 @@
               "properties": {
                 "forceUpdateTag": "[parameters('baseTime')]",
                 "azCliVersion": "2.20.0",
-                "primaryScriptUri": "[concat(parameters('_artifactsLocation'),'deploy-modules.sh',parameters('_artifactsLocationSasToken'))]",
+                "primaryScriptUri": "[concat('https://raw.githubusercontent.com/sbhasale/hci-testdrive-vipcam/main/deployment/scripts/','deploy-modules.sh',parameters('_artifactsLocationSasToken'))]",
                 "supportingScriptUris": [
-                  "[uri(parameters('_artifactsLocation'),concat(parameters('Depolymentjsonprefix'),'.json',parameters('_artifactsLocationSasToken')))]"
+                  "[uri('https://raw.githubusercontent.com/sbhasale/hci-testdrive-vipcam/main/deployment/scripts/',concat(parameters('Depolymentjsonprefix'),'.json',parameters('_artifactsLocationSasToken')))]"
                 ],
                 "environmentVariables": [
                   {
                     "name": "DEPLOYMENT_MANIFEST_TEMPLATE_URL",
-                    "value": "[uri(parameters('_artifactsLocation'),concat(parameters('Depolymentjsonprefix'),'.json',parameters('_artifactsLocationSasToken')))]"
+                    "value": "[uri('https://raw.githubusercontent.com/sbhasale/hci-testdrive-vipcam/main/deployment/scripts/',concat(parameters('Depolymentjsonprefix'),'.json',parameters('_artifactsLocationSasToken')))]"
                   },
                   {
                     "name": "PROVISIONING_TOKEN",
@@ -725,11 +725,11 @@
                   },
                   {
                     "name": "AVA_TOPOLOGY_FILE_URL",
-                    "value": "[uri(parameters('_artifactsLocation'), 'person-count-operation-topology.json')]"
+                    "value": "[uri('https://raw.githubusercontent.com/sbhasale/hci-testdrive-vipcam/main/deployment/scripts/', 'person-count-operation-topology.json')]"
                   },
                   {
                     "name": "AVA_PIPELINE_FILE_URL",
-                    "value": "[uri(parameters('_artifactsLocation'), 'person-count-pipeline.json')]"
+                    "value": "[uri('https://raw.githubusercontent.com/sbhasale/hci-testdrive-vipcam/main/deployment/scripts/', 'person-count-pipeline.json')]"
                   }
                 ],
                 "retentionInterval": "P1D",
@@ -870,7 +870,7 @@
                     "[variables('webappName')]"
                   ],
                   "properties": {
-                    "packageUri": "[uri(variables('_artifactsLocation'),'percept-testdrive-app.zip')]"
+                    "packageUri": "[uri('https://raw.githubusercontent.com/sbhasale/hci-testdrive-vipcam/main/frontend-app','frontend-app.zip')]"
                   }
                 }
               ]
