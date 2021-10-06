@@ -36,7 +36,7 @@ This open-source reference solution showcases best practices for AI security, pr
 ## App Deployment
 Deployment starts with this button. Please reference the below details for populating the requested deployment information.
 
-[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fsbhasale%2Fhci-testdrive-vipcam%2Fmain%2Fdeployment%2Farm-templates%2Fstart.deploy.json)
+[![Deploy to Azure](https://aka.ms/deploytoazurebutton)](https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Funifiededgescenarios.blob.core.windows.net%2Farm-template%2Fazure-percept-testdrive%2Flatest%2Fstart.deploy.json)
 
 This will redirect you to the Azure portal with this deployment page:
 
