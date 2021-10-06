@@ -59,14 +59,30 @@
               }
             }
           },
-          "rtspsim": {
+          "vipcam": {
             "version": "1.0",
             "type": "docker",
             "status": "running",
             "restartPolicy": "always",
             "settings": {
-              "image": "mcr.microsoft.com/lva-utilities/rtspsim-live555:1.2",
-              "createOptions": "{\"HostConfig\":{\"Binds\":[\"$VIDEO_INPUT_FOLDER_ON_DEVICE:/live/mediaServer/media\"],\"PortBindings\":{\"554/tcp\":[{\"HostPort\":\"554\"}]}}}"
+              "image": "containerregistryswapnil.azurecr.io/vipcam:latest",
+              "createOptions": {
+                "Env": [
+                  "VIPCAM_VIDEO_FILE_PATH=/vipcamvideos/cafeteria.mkv"
+                ],
+                "HostConfig": {
+                    "Binds": [
+                        "$VIDEO_INPUT_FOLDER_ON_DEVICE:/vipcamvideos/"
+                    ],
+                    "PortBindings": {
+                        "8554/tcp": [
+                            {
+                                "HostPort": "8554"
+                            }
+                        ]
+                    }
+                }
+              }
             }
           },
           "videoDownloader": {
@@ -76,11 +92,11 @@
             "restartPolicy": "always",
             "settings": {
               "image": "$CONTAINER_REGISTRY_USERNAME_myacr.azurecr.io/video-downloader:latest-mariner.nvidia",
-              "createOptions": "{\"ExposedPorts\":{\"5678/tcp\":{}},\"HostConfig\":{\"Binds\":[\"$VIDEO_INPUT_FOLDER_ON_DEVICE:/live/mediaServer/media\"],\"PortBindings\":{\"5678/tcp\":[{\"HostPort\":\"5678\"}]},\"DeviceRequests\":[{\"Capabilities\":[[\"gpu\"]],\"Count\":-1}]}}"
+              "createOptions": "{\"ExposedPorts\":{\"5678/tcp\":{}},\"HostConfig\":{\"Binds\":[\"$VIDEO_INPUT_FOLDER_ON_DEVICE:/vipcamvideos/\"],\"PortBindings\":{\"5678/tcp\":[{\"HostPort\":\"5678\"}]},\"DeviceRequests\":[{\"Capabilities\":[[\"gpu\"]],\"Count\":-1}]}}"
             },
             "env": {
               "VIDEO_INPUT_FOLDER_ON_DEVICE": {
-                "value": "/live/mediaServer/media"
+                "value": "/vipcamvideos/"
               }
             }
           },

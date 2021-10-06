@@ -127,14 +127,17 @@
                             }
                         }
                     },
-                    "rtspsim": {
+                    "vipcam": {
                         "version": "1.0",
                         "type": "docker",
                         "status": "running",
                         "restartPolicy": "always",
                         "settings": {
-                            "image": "mcr.microsoft.com/lva-utilities/rtspsim-live555:1.2",
+                            "image": "containerregistryswapnil.azurecr.io/vipcam:latest",
                             "createOptions": {
+                                "Env": [
+                                    "VIPCAM_VIDEO_FILE_PATH=/vipcamvideos/cafeteria.mkv"
+                                ],
                                 "HostConfig": {
                                     "LogConfig": {
                                         "Type": "",
@@ -144,7 +147,7 @@
                                         }
                                     },
                                     "Binds": [
-                                        "$VIDEO_INPUT_FOLDER_ON_DEVICE:/live/mediaServer/media"
+                                        "$VIDEO_INPUT_FOLDER_ON_DEVICE:/vipcamvideos/"
                                     ]
                                 }
                             }
