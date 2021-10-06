@@ -31,33 +31,13 @@
                         "status": "running",
                         "restartPolicy": "always",
                         "settings": {
-                            "image": "mcr.microsoft.com/azureiotedge-hub:1.1",
-                            "createOptions": {
-                                "HostConfig": {
-                                    "PortBindings": {
-                                        "5671/tcp": [
-                                            {
-                                                "HostPort": "5671"
-                                            }
-                                        ],
-                                        "8883/tcp": [
-                                            {
-                                                "HostPort": "8883"
-                                            }
-                                        ],
-                                        "443/tcp": [
-                                            {
-                                                "HostPort": "443"
-                                            }
-                                        ]
-                                    }
-                                }
-                            }
+                          "image": "mcr.microsoft.com/azureiotedge-hub:1.1",
+                          "createOptions": "{\"HostConfig\":{\"PortBindings\":{\"5671/tcp\":[{\"HostPort\":\"5671\"}],\"8883/tcp\":[{\"HostPort\":\"8883\"}],\"443/tcp\":[{\"HostPort\":\"443\"}]}}}"
                         },
                         "env": {
-                            "UpstreamProtocol": {
-                                "value": "AMQPWS"
-                            }
+                          "UpstreamProtocol": {
+                            "value": "AMQPWS"
+                          }
                         }
                     }
                 },
@@ -103,22 +83,11 @@
                         "restartPolicy": "always",
                         "settings": {
                             "image": "containerregistryswapnil.azurecr.io/vipcam:latest",
-                            "createOptions": {
-                                "Env": [
-                                    "VIPCAM_VIDEO_FILE_PATH=/vipcamvideos/cafeteria.mkv"
-                                ],
-                                "HostConfig": {
-                                    "Binds": [
-                                        "$VIDEO_INPUT_FOLDER_ON_DEVICE:/vipcamvideos/"
-                                    ],
-                                    "PortBindings": {
-                                        "8554/tcp": [
-                                            {
-                                                "HostPort": "8554"
-                                            }
-                                        ]
-                                    }
-                                }
+                            "createOptions": "{\"HostConfig\":{\"Binds\":[\"$VIDEO_INPUT_FOLDER_ON_DEVICE:/vipcamvideos/\"],\"PortBindings\":{\"8554/tcp\":[{\"HostPort\":\"8554\"}]}}}"
+                        },
+                        "env": {
+                            "VIPCAM_VIDEO_FILE_PATH" : {
+                                "value" : "/vipcamvideos/cafeteria.mkv"
                             }
                         }
                     },
@@ -128,39 +97,13 @@
                         "status": "running",
                         "restartPolicy": "always",
                         "settings": {
-                            "image": "$CONTAINER_REGISTRY_USERNAME_myacr.azurecr.io/video-downloader:latest-mariner.nvidia",
-                            "createOptions": {
-                                "ExposedPorts": {
-                                    "5678/tcp": {}
-                                },
-                                "HostConfig": {
-                                    "Binds": [
-                                        "$VIDEO_INPUT_FOLDER_ON_DEVICE:/vipcamvideos/"
-                                    ],
-                                    "PortBindings": {
-                                        "5678/tcp": [
-                                            {
-                                                "HostPort": "5678"
-                                            }
-                                        ]
-                                    },
-                                    "DeviceRequests": [
-                                        {
-                                            "Capabilities": [
-                                                [
-                                                    "gpu"
-                                                ]
-                                            ],
-                                            "Count": -1
-                                        }
-                                    ]
-                                }
-                            }
+                          "image": "$CONTAINER_REGISTRY_USERNAME_myacr.azurecr.io/video-downloader:latest-mariner.nvidia",
+                          "createOptions": "{\"ExposedPorts\":{\"5678/tcp\":{}},\"HostConfig\":{\"Binds\":[\"$VIDEO_INPUT_FOLDER_ON_DEVICE:/live/mediaServer/media\"],\"PortBindings\":{\"5678/tcp\":[{\"HostPort\":\"5678\"}]},\"DeviceRequests\":[{\"Capabilities\":[[\"gpu\"]],\"Count\":-1}]}}"
                         },
                         "env": {
-                            "VIDEO_INPUT_FOLDER_ON_DEVICE": {
-                                "value": "/vipcamvideos/"
-                            }
+                          "VIDEO_INPUT_FOLDER_ON_DEVICE": {
+                            "value": "/live/mediaServer/media"
+                          }
                         }
                     },
                     "spatialanalysis": {
@@ -169,75 +112,43 @@
                         "status": "running",
                         "restartPolicy": "always",
                         "settings": {
-                            "image": "mcr.microsoft.com/azure-cognitive-services/vision/spatial-analysis:1.4",
-                            "createOptions": {
-                                "HostConfig": {
-                                    "PortBindings": {
-                                        "50051/tcp": [
-                                            {
-                                                "HostPort": "50051"
-                                            }
-                                        ]
-                                    },
-                                    "IpcMode": "host",
-                                    "Binds": [
-                                        "/tmp/.X11-unix:/tmp/.X11-unix"
-                                    ],
-                                    "ShmSize": 536870912,
-                                    "LogConfig": {
-                                        "Type": "json-file",
-                                        "Config": {
-                                            "max-size": "10m",
-                                            "max-file": "200"
-                                        }
-                                    },
-                                    "DeviceRequests": [
-                                        {
-                                            "Capabilities": [
-                                                [
-                                                    "gpu"
-                                                ]
-                                            ],
-                                            "Count": -1
-                                        }
-                                    ]
-                                }
-                            }
+                          "image": "mcr.microsoft.com/azure-cognitive-services/vision/spatial-analysis:1.4",
+                          "createOptions": "{\"HostConfig\":{\"PortBindings\":{\"50051/tcp\":[{\"HostPort\":\"50051\"}]},\"IpcMode\":\"host\",\"Binds\":[\"/tmp/.X11-unix:/tmp/.X11-unix\"],\"ShmSize\":536870912,\"LogConfig\":{\"Type\":\"json-file\",\"Config\":{\"max-size\":\"10m\",\"max-file\":\"200\"}},\"DeviceRequests\":[{\"Capabilities\":[[\"gpu\"]],\"Count\":-1}]}}"
                         },
                         "env": {
-                            "DISPLAY": {
-                                "value": ":0"
-                            },
-                            "ARCHON_SHARED_BUFFER_LIMIT": {
-                                "value": "377487360"
-                            },
-                            "ARCHON_LOG_LEVEL": {
-                                "value": "info"
-                            },
-                            "QT_X11_NO_MITSHM": {
-                                "value": "1"
-                            },
-                            "OMP_WAIT_POLICY": {
-                                "value": "PASSIVE"
-                            },
-                            "EULA": {
-                                "value": "accept"
-                            },
-                            "ARCHON_TELEMETRY_IOTHUB": {
-                                "value": "true"
-                            },
-                            "BILLING": {
-                                "value": "$COGNITIVE_BILLING_ENDPOINT"
-                            },
-                            "APIKEY": {
-                                "value": "$COGNITIVE_API_KEY"
-                            },
-                            "LAUNCHER_TYPE": {
-                                "value": "avaBackend"
-                            },
-                            "ARCHON_GRAPH_READY_TIMEOUT": {
-                                "value": "600"
-                            }
+                          "DISPLAY": {
+                            "value": ":0"
+                          },
+                          "ARCHON_SHARED_BUFFER_LIMIT": {
+                            "value": "377487360"
+                          },
+                          "ARCHON_LOG_LEVEL": {
+                            "value": "info"
+                          },
+                          "QT_X11_NO_MITSHM": {
+                            "value": "1"
+                          },
+                          "OMP_WAIT_POLICY": {
+                            "value": "PASSIVE"
+                          },
+                          "EULA": {
+                            "value": "accept"
+                          },
+                          "ARCHON_TELEMETRY_IOTHUB": {
+                            "value": "true"
+                          },
+                          "BILLING": {
+                            "value": "$COGNITIVE_BILLING_ENDPOINT"
+                          },
+                          "APIKEY": {
+                            "value": "$COGNITIVE_API_KEY"
+                          },
+                          "LAUNCHER_TYPE": {
+                            "value": "avaBackend"
+                          },
+                          "ARCHON_GRAPH_READY_TIMEOUT": {
+                            "value": "600"
+                          }
                         }
                     }
                 }
