@@ -81,7 +81,7 @@
             "properties": {
                 "forceUpdateTag": "1",
                 "azCliVersion": "2.9.1",
-                "primaryScriptUri": "[concat(parameters('_artifactsLocation'),'disk-setup.sh')]",
+                "primaryScriptUri": "[concat('https://raw.githubusercontent.com/sbhasale/hci-testdrive-vipcam/main/deployment/scripts/','disk-setup.sh')]",
                 "environmentVariables": [
                     {
                         "name": "RESOURCE_GROUP_DEVICE",
