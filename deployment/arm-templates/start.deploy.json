@@ -870,7 +870,7 @@
                     "[variables('webappName')]"
                   ],
                   "properties": {
-                    "packageUri": "[uri('https://raw.githubusercontent.com/sbhasale/hci-testdrive-vipcam/main/frontend-app/','frontend-app.zip')]"
+                    "packageUri": "[uri('https://unifiededgescenarios.blob.core.windows.net/arm-template/azure-percept-testdrive/latest/','percept-testdrive-app.zip')]"
                   }
                 }
               ]
