@@ -11,7 +11,7 @@
 # $HUB_NAME                         - the name of the IoT Hub where the edge device is registered
 # $DEVICE_ID                        - the name of the edge device on the IoT Hub
 # $VIDEO_OUTPUT_FOLDER_ON_DEVICE    - the folder where the file sink will store clips
-# $VIDEO_INPUT_FOLDER_ON_DEVICE     - the folder where where rtspsim will look for sample clips
+# $VIDEO_INPUT_FOLDER_ON_DEVICE     - the folder where where vipcam will look for sample clips
 # $APPDATA_FOLDER_ON_DEVICE         - the folder where Video Analyzer module will store state
 # $AZURE_STORAGE_ACCOUNT            - the storage where the deployment manifest will be stored
 # $AZ_SCRIPTS_OUTPUT_PATH           - file to write output (provided by the deployment script runtime) 

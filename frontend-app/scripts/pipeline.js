@@ -60,7 +60,7 @@ module.exports = class Pipeline {
             parameters = [
                 {
                     "name": "rtspUrl",
-                    "value": `rtsp://rtspsim:554/media/${name}`
+                    "value": `rtsp://vipcam:8554/vipcam`
                 },
                 {
                     "name": "rtspUserName",
