@@ -76,7 +76,7 @@
                         },
                         "env": {
                             "VIPCAM_VIDEO_FILE_PATH" : {
-                                "value" : "/vipcamvideos/cafeteria.mkv"
+                                "value" : "/vipcamvideos/cafeteria-test.mkv"
                             }
                         }
                     },
