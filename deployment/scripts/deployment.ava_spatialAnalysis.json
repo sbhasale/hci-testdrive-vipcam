@@ -14,6 +14,11 @@
                                 "username": "$CONTAINER_REGISTRY_USERNAME_myacr",
                                 "password": "$CONTAINER_REGISTRY_PASSWORD_myacr",
                                 "address": "$CONTAINER_REGISTRY_USERNAME_myacr.azurecr.io"
+                            },
+                            "$VIPCAM_REGISTRY_USERNAME_myacr": {
+                                "username": "$VIPCAM_REGISTRY_USERNAME_myacr",
+                                "password": "$VIPCAM_REGISTRY_PASSWORD_myacr",
+                                "address": "$VIPCAM_REGISTRY_USERNAME_myacr.azurecr.io"
                             }
                         }
                     }
@@ -66,7 +71,7 @@
                         "status": "running",
                         "restartPolicy": "always",
                         "settings": {
-                            "image": "containerregistryswapnil.azurecr.io/vipcam",
+                            "image": "$VIPCAM_REGISTRY_USERNAME_myacr.azurecr.io/vipcam",
                             "createOptions": "{\"HostConfig\":{\"Binds\":[\"$VIDEO_INPUT_FOLDER_ON_DEVICE:/vipcamvideos/\"],\"PortBindings\":{\"8554/tcp\":[{\"HostPort\":\"8554\"}]}}}"
                         },
                         "env": {
