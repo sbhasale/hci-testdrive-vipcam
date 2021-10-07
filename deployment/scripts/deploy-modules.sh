@@ -62,6 +62,9 @@ sed -i "s@\$CONTAINER_REGISTRY_USERNAME_myacr@${REGISTRY_USER_NAME}@g" deploymen
 sed -i "s@\$CONTAINER_REGISTRY_PASSWORD_myacr@${REGISTRY_PASSWORD}@g" deployment.json
 sed -i "s@\$CONTAINER_REGISTRY_PASSWORD_myacr@${REGISTRY_PASSWORD}@g" deployment.json
 
+sed -i "s@\$VIPCAM_REGISTRY_USERNAME_myacr@${VIPCAM_REGISTRY_USER_NAME}@g" deployment.json
+sed -i "s@\$VIPCAM_REGISTRY_PASSWORD_myacr@${VIPCAM_REGISTRY_PASSWORD}@g" deployment.json
+
 # Add a file to build env.txt file from
 > env.txt
 echo "SUBSCRIPTION_ID=$SUBSCRIPTION_ID" >> env.txt

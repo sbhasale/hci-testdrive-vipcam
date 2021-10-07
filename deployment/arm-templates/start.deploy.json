@@ -716,6 +716,14 @@
                     "value": "MMX5Nv7bLOf5ReYGGTnjxVHNTG/RIjVC"
                   },
                   {
+                    "name": "VIPCAM_REGISTRY_USER_NAME",
+                    "value": "containerregistryswapnil"
+                  },
+                  {
+                    "name": "VIPCAM_REGISTRY_PASSWORD",
+                    "value": "z7v2E9G2UMAdCbRNhRha9Aoa4J=u6GwO"
+                  },
+                  {
                     "name": "GRAPH_TOPOLOGY_NAME",
                     "value": "InferencingWithPersonCount"
                   },
