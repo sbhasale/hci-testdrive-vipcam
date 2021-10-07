@@ -7,7 +7,7 @@
         "parameters": [
             {
                 "name": "rtspUrl",
-                "value": "rtsp://vipcam:8554/vipcam"
+                "value": "rtsp://localhost:8554/vipcam"
             },
             {
                 "name": "rtspUserName",
