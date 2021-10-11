@@ -1,0 +1,533 @@
+# CI disabled
+trigger: none
+
+# Trigger after completion of Build ARM Template Pipeline
+resources:
+  pipelines:
+    - pipeline: build
+      project: AzurePerceptTestDrive
+      source: Build ARM Template
+      trigger:
+        enabled: true
+
+pool: default
+
+variables:
+  buildSuffix: "$(Build.BuildNumber)"
+  ? ${{ if or(startsWith(variables['Build.SourceBranchName'], 'release'), eq(variables['Build.SourceBranchName'], 'main')) }}
+  : Variable_Group: "ARMTemplate_ReleaseEnvironment"
+  ? ${{ if and(not(startsWith(variables['Build.SourceBranchName'], 'release')), ne(variables['Build.SourceBranchName'], 'main')) }}
+  : Variable_Group: "ARMTemplate_TestEnvironment"
+
+stages:
+  - stage: "Deploy"
+    jobs:
+      - job: "Deploy"
+        variables:
+          - group: ${{variables.Variable_Group}}
+        displayName: "Deploy ARM Template to a test environment"
+        steps:
+          - checkout: self
+
+          - task: DownloadPipelineArtifact@2
+            enabled: true
+            displayName: "Download artifacts from Build Azure Percept Pipeline"
+            inputs:
+              buildType: "specific"
+              project: "ce7d4f25-7269-4f94-a4b8-c7ddb4991e5b"
+              definition: "22"
+              buildVersionToDownload: "latest"
+              targetPath: "$(System.DefaultWorkingDirectory)"
+
+          - task: Bash@3
+            enabled: true
+            displayName: "Update ARM template and scripts with temporary blob container links"
+            inputs:
+              targetType: "inline"
+              script: |
+                # Exit the script on any error
+
+
+                echo "Extracting files from artifact zip"
+                 
+                unzip -o arm-deployment-bundle-percept.zip -d .
+                unzip -o manifest-bundle-azurepercept.zip -d .
+                unzip -o percept-testdrive-app.zip -d .
+
+                echo "Updating links in ARM template and scripts to point to temporary container in blob storage"
+
+                STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME="$RELEASE_STORAGE_ACCOUNT_TEMP_ARM_CONTAINER_NAME"
+
+                IS_JQ_INSTALLED=$(apt list --installed | grep -c -w jq)
+                if [ "$IS_JQ_INSTALLED" -eq 0 ]; then
+                    echo "Installing jq"
+                    sudo apt-get install jq
+                    echo "Installed jq"
+                fi
+
+                echo "Updating artifact location in arm template"
+
+                artifactLocation="https://${RELEASE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/${STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME}/"
+                jq --arg a "$artifactLocation" '.variables._artifactsLocation = $a' start.deploy.json > "tmp" && mv "tmp" start.deploy.json
+
+
+                echo "Updated artifact location in arm template"
+              workingDirectory: "$(System.DefaultWorkingDirectory)/arm-deployment-bundle-percept"
+
+          - task: AzureCLI@2
+            displayName: "Upload the ARM template scripts to temporary container in storage account"
+            env:
+              RELEASE_STORAGE_ACCOUNT_KEY: $(RELEASE_STORAGE_ACCOUNT_KEY)
+            inputs:
+              azureSubscription: "AED E2E Experiences"
+              scriptType: "bash"
+              scriptLocation: "inlineScript"
+              inlineScript: |
+                # Exit the script on any error
+                set -e
+
+                STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME="$RELEASE_STORAGE_ACCOUNT_TEMP_ARM_CONTAINER_NAME"
+
+                CONTAINER=$(az storage container exists --name "$STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME" --account-name "$RELEASE_STORAGE_ACCOUNT_NAME" --account-key "$RELEASE_STORAGE_ACCOUNT_KEY" -o tsv)
+
+                if [ "$CONTAINER" == "False" ]; then
+                  echo "Creating temp container \"$STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME\" for arm template scripts in storage account"
+
+                  az storage container create \
+                  --account-name $(RELEASE_STORAGE_ACCOUNT_NAME) \
+                  --account-key $(RELEASE_STORAGE_ACCOUNT_KEY) \
+                  --name "$STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME"
+
+                  az storage container set-permission \
+                  --account-name $(RELEASE_STORAGE_ACCOUNT_NAME) \
+                  --account-key $(RELEASE_STORAGE_ACCOUNT_KEY) \
+                  --name "$STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME" \
+                  --public-access blob
+
+                  echo "Created temp container \"$STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME\" for arm template scripts in storage account"
+                fi
+
+
+                az storage blob upload \
+                  --account-name $(RELEASE_STORAGE_ACCOUNT_NAME) \
+                  --account-key $(RELEASE_STORAGE_ACCOUNT_KEY) \
+                  --container-name "$STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME" \
+                  --file deploy-modules.sh \
+                  --name deploy-modules.sh
+
+                az storage blob upload \
+                  --account-name $(RELEASE_STORAGE_ACCOUNT_NAME) \
+                  --account-key $(RELEASE_STORAGE_ACCOUNT_KEY) \
+                  --container-name "$STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME" \
+                  --file generate-token.sh \
+                  --name generate-token.sh
+
+                az storage blob upload \
+                  --account-name $(RELEASE_STORAGE_ACCOUNT_NAME) \
+                  --account-key $(RELEASE_STORAGE_ACCOUNT_KEY) \
+                  --container-name "$STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME" \
+                  --file iot-edge-setup.sh \
+                  --name iot-edge-setup.sh
+
+                az storage blob upload \
+                  --account-name $(RELEASE_STORAGE_ACCOUNT_NAME) \
+                  --account-key $(RELEASE_STORAGE_ACCOUNT_KEY) \
+                  --container-name "$STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME" \
+                  --file mariner-vm-init.sh \
+                  --name mariner-vm-init.sh
+
+                az storage blob upload \
+                  --account-name $(RELEASE_STORAGE_ACCOUNT_NAME) \
+                  --account-key $(RELEASE_STORAGE_ACCOUNT_KEY) \
+                  --container-name "$STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME" \
+                  --file disk-setup.sh \
+                  --name disk-setup.sh
+
+                echo "Scripts are uploaded to temp storage account container \"$STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME\""
+
+                az storage blob upload \
+                  --account-name $(RELEASE_STORAGE_ACCOUNT_NAME) \
+                  --account-key $(RELEASE_STORAGE_ACCOUNT_KEY) \
+                  --container-name "$STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME" \
+                  --file manifest-bundle-azurepercept.zip \
+                  --name azurepercept-bundle.zip
+
+                # Upload WebApp zip code to temp storage account
+                az storage blob upload \
+                  --account-name $(RELEASE_STORAGE_ACCOUNT_NAME) \
+                  --account-key $(RELEASE_STORAGE_ACCOUNT_KEY) \
+                  --container-name "$STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME" \
+                  --file percept-testdrive-app.zip \
+                  --name percept-testdrive-app.zip
+
+                az storage blob upload \
+                  --account-name $(RELEASE_STORAGE_ACCOUNT_NAME) \
+                  --account-key $(RELEASE_STORAGE_ACCOUNT_KEY) \
+                  --container-name "$STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME" \
+                  --file jwt-token-issuer.zip \
+                  --name jwt-token-issuer.zip
+
+                az storage blob upload \
+                  --account-name $(RELEASE_STORAGE_ACCOUNT_NAME) \
+                  --account-key $(RELEASE_STORAGE_ACCOUNT_KEY) \
+                  --container-name "$STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME" \
+                  --file start.deploy.json \
+                  --name start.deploy.json
+
+                  az storage blob upload \
+                  --account-name $(RELEASE_STORAGE_ACCOUNT_NAME) \
+                  --account-key $(RELEASE_STORAGE_ACCOUNT_KEY) \
+                  --container-name "$STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME" \
+                  --file iot.deploy.json \
+                  --name iot.deploy.json
+
+                  az storage blob upload \
+                  --account-name $(RELEASE_STORAGE_ACCOUNT_NAME) \
+                  --account-key $(RELEASE_STORAGE_ACCOUNT_KEY) \
+                  --container-name "$STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME" \
+                  --file mariner-vm.deploy.json \
+                  --name mariner-vm.deploy.json
+
+                 az storage blob upload \
+                  --account-name $(RELEASE_STORAGE_ACCOUNT_NAME) \
+                  --account-key $(RELEASE_STORAGE_ACCOUNT_KEY) \
+                  --container-name "$STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME" \
+                  --file deployment.ava_spatialAnalysis.json \
+                  --name deployment.ava_spatialAnalysis.json
+
+
+                  az storage blob upload \
+                  --account-name $(RELEASE_STORAGE_ACCOUNT_NAME) \
+                  --account-key $(RELEASE_STORAGE_ACCOUNT_KEY) \
+                  --container-name "$STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME" \
+                  --file video-analyzer.deploy.json \
+                  --name  video-analyzer.deploy.json
+
+                echo "Uploading AVA graph files"
+
+                  az storage blob upload \
+                    --account-name $(RELEASE_STORAGE_ACCOUNT_NAME) \
+                    --account-key $(RELEASE_STORAGE_ACCOUNT_KEY) \
+                    --container-name "$STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME" \
+                    --file person-count-pipeline.json \
+                    --name  person-count-pipeline.json
+
+                  az storage blob upload \
+                    --account-name $(RELEASE_STORAGE_ACCOUNT_NAME) \
+                    --account-key $(RELEASE_STORAGE_ACCOUNT_KEY) \
+                    --container-name "$STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME" \
+                    --file person-count-operation-topology.json \
+                    --name  person-count-operation-topology.json
+
+                echo "Uploading sample video file"
+
+                  az storage blob upload \
+                    --account-name $(RELEASE_STORAGE_ACCOUNT_NAME) \
+                    --account-key $(RELEASE_STORAGE_ACCOUNT_KEY) \
+                    --container-name "$STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME" \
+                    --file videos/cafeteria.mkv \
+                    --name  cafeteria.mkv
+
+                # Writing rgSuffix value to local job variables, so it can be used in ARM template task
+
+                rgSuffixLocal="$(echo "$(buildSuffix)" | md5sum | cut -c1-4)"
+                echo "##vso[task.setvariable variable=rgSuffix]$rgSuffixLocal"
+              workingDirectory: "$(System.DefaultWorkingDirectory)/arm-deployment-bundle-percept"
+
+          - task: AzureResourceManagerTemplateDeployment@3
+            enabled: true
+            inputs:
+              deploymentScope: "Subscription"
+              azureResourceManagerConnection: "AED E2E Experiences"
+              subscriptionId: "7c9469c0-29ac-424a-85ab-d01f2cea1c38"
+              location: "West US 2"
+              templateLocation: "Linked artifact"
+              csmFile: "$(System.DefaultWorkingDirectory)/arm-deployment-bundle-percept/start.deploy.json"
+              overrideParameters: '-resourceGroup "$(RESOURCE_GROUP_ARM)$(rgSuffix)"'
+              deploymentMode: "Incremental"
+
+          - task: AzureCLI@2
+            enabled: true
+            displayName: "Delete temporary container for arm template scripts in storage account"
+            env:
+              RELEASE_STORAGE_ACCOUNT_KEY: $(RELEASE_STORAGE_ACCOUNT_KEY)
+            inputs:
+              azureSubscription: "AED E2E Experiences"
+              scriptType: "bash"
+              scriptLocation: "inlineScript"
+              inlineScript: |
+                STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME="$RELEASE_STORAGE_ACCOUNT_TEMP_ARM_CONTAINER_NAME"
+                CONTAINER=$(az storage container exists --name "$STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME" --account-name "$RELEASE_STORAGE_ACCOUNT_NAME" --account-key "$RELEASE_STORAGE_ACCOUNT_KEY" -o tsv)
+
+                if [ "$CONTAINER" == "True" ]; then
+                  echo "Deleting temp container  \"$STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME\" for arm template scripts"
+                  az storage container delete \
+                  --account-name $(RELEASE_STORAGE_ACCOUNT_NAME) \
+                  --account-key $(RELEASE_STORAGE_ACCOUNT_KEY) \
+                  --name "$STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME"
+
+                  echo "Deleted temp container  \"$STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME\" for arm template scripts"
+                fi
+              workingDirectory: "$(System.DefaultWorkingDirectory)"
+
+  - stage: Release
+    jobs:
+      - deployment: "Release"
+        displayName: "Release ARM Template to storage account"
+        environment: "ApproveARMRelease"
+        variables:
+          - group: ${{variables.Variable_Group}}
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - checkout: self
+
+                - task: AzureCLI@2
+                  displayName: "Delete the resource group of test environment"
+                  inputs:
+                    azureSubscription: "AED E2E Experiences"
+                    scriptType: "bash"
+                    scriptLocation: "inlineScript"
+                    inlineScript: |
+                      # Exit the script on any error
+                      set -e
+
+                      rgSuffix="$(echo "$(buildSuffix)" | md5sum | cut -c1-4)"
+                      RESOURCE_GROUP_ARM=$RESOURCE_GROUP_ARM$rgSuffix
+                      RESOURCE_GROUP_DEVICE="${RESOURCE_GROUP_ARM}VM"
+
+                      echo "Deleting resource group for IoT Hub \"$RESOURCE_GROUP_ARM\""
+                      GROUP_EXISTS=$(az group exists -n "$RESOURCE_GROUP_ARM")
+                      if [ "$GROUP_EXISTS" == "true" ]; then
+                        az group delete --resource-group "$RESOURCE_GROUP_ARM" --yes --no-wait
+                        echo "Triggered deletion of resource group \"$RESOURCE_GROUP_ARM\""
+                      fi
+
+                      echo "Deleting resource group for VM \"$RESOURCE_GROUP_DEVICE\""
+                      GROUP_EXISTS=$(az group exists -n "$RESOURCE_GROUP_DEVICE")
+                      if [ "$GROUP_EXISTS" == "true" ]; then
+                        az group delete --resource-group "$RESOURCE_GROUP_DEVICE" --yes --no-wait
+                        echo "Triggered deletion of resource group \"$RESOURCE_GROUP_DEVICE\""
+                      fi
+
+                - task: DownloadPipelineArtifact@2
+                  enabled: true
+                  displayName: "Download artifacts from Build Azure Percept Pipeline"
+                  inputs:
+                    buildType: "specific"
+                    project: "ce7d4f25-7269-4f94-a4b8-c7ddb4991e5b"
+                    definition: "22"
+                    buildVersionToDownload: "latest"
+                    targetPath: "$(System.DefaultWorkingDirectory)"
+
+                - task: Bash@3
+                  displayName: "Update links in versioned ARM template and scripts"
+                  inputs:
+                    targetType: "inline"
+                    script: |
+                      # Exit the script on any error
+                      set -e
+
+                      echo "Extracting files from artifact zip"
+                      unzip -o arm-deployment-bundle-percept.zip -d .
+                      unzip -o manifest-bundle-azurepercept.zip -d.
+                      unzip -o percept-testdrive-app.zip -d .
+
+                      #DEPLOY_MODULES_FILENAME="deploy-modules-$(buildSuffix).sh"
+                      #ARM_TEMPLATE_FILENAME="start.deploy-$(buildSuffix).json"
+
+                      #cp start.deploy.json "$ARM_TEMPLATE_FILENAME"
+                      #cp deploy-modules.sh "$DEPLOY_MODULES_FILENAME"
+
+                      echo "Updating links in versioned ARM template for and scripts"
+
+                      STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME="$RELEASE_STORAGE_ACCOUNT_ARM_CONTAINER_NAME/azure-percept-testdrive/$(buildSuffix)"
+
+                      # MANIFEST_URL="https://${RELEASE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/${STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME}/azurepercept-bundle.zip"
+                      # sed -i 's#^\(SAS_URL[ ]*=\).*#\1\"'"$MANIFEST_URL"'\"#g' "$DEPLOY_MODULES_FILENAME"
+
+                      IS_JQ_INSTALLED=$(apt list --installed | grep -c -w jq)
+                      if [ "$IS_JQ_INSTALLED" -eq 0 ]; then
+                          echo "Installing jq"
+                          sudo apt-get install jq
+                          echo "Installed jq"
+                      fi
+
+                      echo "Updating Primary scripts Url for deploymentScript in arm template"
+
+                      artifactLocation="https://${RELEASE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/${STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME}/"
+                      jq --arg a "$artifactLocation" '.variables._artifactsLocation = $a' start.deploy.json > "tmp" && mv "tmp" start.deploy.json
+
+                      echo "Updated Primary scripts Url for deploymentScript in arm template"
+                    workingDirectory: "$(System.DefaultWorkingDirectory)/arm-deployment-bundle-percept"
+
+                - task: AzureCLI@2
+                  displayName: "Upload the versioned ARM templates and scripts to release storage account"
+                  env:
+                    RELEASE_STORAGE_ACCOUNT_KEY: $(RELEASE_STORAGE_ACCOUNT_KEY)
+                  inputs:
+                    azureSubscription: "AED E2E Experiences"
+                    scriptType: "bash"
+                    scriptLocation: "inlineScript"
+                    inlineScript: |
+                      if [ "$CREATE_NEW_CONTAINER" == "true" ];then
+                        echo "Creating container \"$RELEASE_STORAGE_ACCOUNT_ARM_CONTAINER_NAME\" in storage account"
+
+                        az storage container create \
+                        --account-name $(RELEASE_STORAGE_ACCOUNT_NAME) \
+                        --account-key $(RELEASE_STORAGE_ACCOUNT_KEY) \
+                        --name "$RELEASE_STORAGE_ACCOUNT_ARM_CONTAINER_NAME" \
+
+                        az storage container set-permission \
+                        --account-name $(RELEASE_STORAGE_ACCOUNT_NAME) \
+                        --account-key $(RELEASE_STORAGE_ACCOUNT_KEY) \
+                        --name "$RELEASE_STORAGE_ACCOUNT_ARM_CONTAINER_NAME" \
+                        --public-access blob
+                      fi
+
+                      upload-blob () {
+                        BLOB_PATH="$1"
+                        BLOB_FILE_NAME="$2"
+
+                        echo "Uploading new blob to: ${RELEASE_STORAGE_ACCOUNT_ARM_CONTAINER_NAME}/${BLOB_PATH}${BLOB_FILE_NAME}"
+
+                        az storage blob upload \
+                          --account-name $(RELEASE_STORAGE_ACCOUNT_NAME) \
+                          --account-key $(RELEASE_STORAGE_ACCOUNT_KEY) \
+                          --container-name "$RELEASE_STORAGE_ACCOUNT_ARM_CONTAINER_NAME" \
+                          --file "$BLOB_FILE_NAME" \
+                          --name "${BLOB_PATH}${BLOB_FILE_NAME}"
+
+                        az storage blob lease acquire \
+                          --account-name $(RELEASE_STORAGE_ACCOUNT_NAME) \
+                          --account-key $(RELEASE_STORAGE_ACCOUNT_KEY) \
+                          --container-name "$RELEASE_STORAGE_ACCOUNT_ARM_CONTAINER_NAME" \
+                          --blob-name "${BLOB_PATH}${BLOB_FILE_NAME}"
+
+                        echo "File successfully uploaded: $BLOB_FILE_NAME"
+
+                      }
+
+                      BLOB_UPLOAD_PATH="azure-percept-testdrive/$(buildSuffix)/"
+
+                      echo "BLOB_UPLOAD_PATH $BLOB_UPLOAD_PATH"
+
+                      upload-blob $BLOB_UPLOAD_PATH start.deploy.json
+                      upload-blob $BLOB_UPLOAD_PATH iot.deploy.json
+                      upload-blob $BLOB_UPLOAD_PATH mariner-vm.deploy.json
+                      upload-blob $BLOB_UPLOAD_PATH video-analyzer.deploy.json
+
+                      upload-blob $BLOB_UPLOAD_PATH deployment.ava_spatialAnalysis.json
+                      upload-blob $BLOB_UPLOAD_PATH person-count-pipeline.json
+                      upload-blob $BLOB_UPLOAD_PATH person-count-operation-topology.json
+
+                      cp videos/cafeteria.mkv cafeteria.mkv
+                      upload-blob $BLOB_UPLOAD_PATH cafeteria.mkv
+
+                      upload-blob $BLOB_UPLOAD_PATH deploy-modules.sh
+                      upload-blob $BLOB_UPLOAD_PATH generate-token.sh
+                      upload-blob $BLOB_UPLOAD_PATH iot-edge-setup.sh
+                      upload-blob $BLOB_UPLOAD_PATH mariner-vm-init.sh
+                      upload-blob $BLOB_UPLOAD_PATH disk-setup.sh
+
+                      upload-blob $BLOB_UPLOAD_PATH percept-testdrive-app.zip
+                      upload-blob $BLOB_UPLOAD_PATH jwt-token-issuer.zip
+                    workingDirectory: "$(System.DefaultWorkingDirectory)/arm-deployment-bundle-percept"
+
+                - task: Bash@3
+                  displayName: "Update links in ARM template and scripts"
+                  inputs:
+                    targetType: "inline"
+                    script: |
+                      # Exit the script on any error
+                      set -e
+
+                      # DEPLOY_MODULES_FILENAME="deploy-modules.sh"
+                      ARM_TEMPLATE_FILENAME="start.deploy.json"
+
+                      echo "Updating links in ARM template"
+                      STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME="$RELEASE_STORAGE_ACCOUNT_ARM_CONTAINER_NAME/azure-percept-testdrive/latest"
+
+                      # MANIFEST_URL="https://${RELEASE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/${STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME}/azurepercept-bundle.zip"
+                      # sed -i 's#^\(SAS_URL[ ]*=\).*#\1\"'"$MANIFEST_URL"'\"#g' "$DEPLOY_MODULES_FILENAME"
+
+                      IS_JQ_INSTALLED=$(apt list --installed | grep -c -w jq)
+                      if [ "$IS_JQ_INSTALLED" -eq 0 ]; then
+                          echo "Installing jq"
+                          sudo apt-get install jq
+                          echo "Installed jq"
+                      fi
+
+                      echo "Updating artificat location in arm template"
+
+                      artifactLocation="https://${RELEASE_STORAGE_ACCOUNT_NAME}.blob.core.windows.net/${STORAGE_ACCOUNT_ARM_SCRIPTS_CONTAINER_NAME}/"
+                      jq --arg a "$artifactLocation" '.variables._artifactsLocation = $a' start.deploy.json > "tmp" && mv "tmp" start.deploy.json
+
+                      echo "Updated artificat location in arm template"
+                    workingDirectory: "$(System.DefaultWorkingDirectory)/arm-deployment-bundle-percept"
+
+                - task: AzureCLI@2
+                  displayName: "Upload the versioned ARM templates and scripts to release storage account"
+                  env:
+                    RELEASE_STORAGE_ACCOUNT_KEY: $(RELEASE_STORAGE_ACCOUNT_KEY)
+                  inputs:
+                    azureSubscription: "AED E2E Experiences"
+                    scriptType: "bash"
+                    scriptLocation: "inlineScript"
+                    inlineScript: |
+                      if [ "$CREATE_NEW_CONTAINER" == "true" ];then
+                        echo "Creating container \"$RELEASE_STORAGE_ACCOUNT_ARM_CONTAINER_NAME\" in storage account"
+
+                        az storage container create \
+                        --account-name $(RELEASE_STORAGE_ACCOUNT_NAME) \
+                        --account-key $(RELEASE_STORAGE_ACCOUNT_KEY) \
+                        --name "$RELEASE_STORAGE_ACCOUNT_ARM_CONTAINER_NAME" \
+
+                        az storage container set-permission \
+                        --account-name $(RELEASE_STORAGE_ACCOUNT_NAME) \
+                        --account-key $(RELEASE_STORAGE_ACCOUNT_KEY) \
+                        --name "$RELEASE_STORAGE_ACCOUNT_ARM_CONTAINER_NAME" \
+                        --public-access blob
+                      fi
+
+                      upload-blob () {
+                        BLOB_PATH="$1"
+                        BLOB_FILE_NAME="$2"
+
+                        echo "Uploading new blob to: ${RELEASE_STORAGE_ACCOUNT_ARM_CONTAINER_NAME}/${BLOB_PATH}${BLOB_FILE_NAME}"
+
+                        az storage blob upload \
+                          --account-name $(RELEASE_STORAGE_ACCOUNT_NAME) \
+                          --account-key $(RELEASE_STORAGE_ACCOUNT_KEY) \
+                          --container-name "$RELEASE_STORAGE_ACCOUNT_ARM_CONTAINER_NAME" \
+                          --file "$BLOB_FILE_NAME" \
+                          --name "${BLOB_PATH}${BLOB_FILE_NAME}"
+
+                        echo "File successfully uploaded: $BLOB_FILE_NAME"
+
+                      }
+
+                      BLOB_UPLOAD_PATH="azure-percept-testdrive/latest/"
+
+                      upload-blob $BLOB_UPLOAD_PATH start.deploy.json
+                      upload-blob $BLOB_UPLOAD_PATH iot.deploy.json
+                      upload-blob $BLOB_UPLOAD_PATH mariner-vm.deploy.json
+                      upload-blob $BLOB_UPLOAD_PATH video-analyzer.deploy.json
+
+                      upload-blob $BLOB_UPLOAD_PATH deployment.ava_spatialAnalysis.json
+                      upload-blob $BLOB_UPLOAD_PATH person-count-pipeline.json
+                      upload-blob $BLOB_UPLOAD_PATH person-count-operation-topology.json
+
+                      cp videos/cafeteria.mkv cafeteria.mkv
+                      upload-blob $BLOB_UPLOAD_PATH cafeteria.mkv
+
+                      upload-blob $BLOB_UPLOAD_PATH deploy-modules.sh
+                      upload-blob $BLOB_UPLOAD_PATH generate-token.sh
+                      upload-blob $BLOB_UPLOAD_PATH iot-edge-setup.sh
+                      upload-blob $BLOB_UPLOAD_PATH mariner-vm-init.sh
+                      upload-blob $BLOB_UPLOAD_PATH disk-setup.sh
+
+                      upload-blob $BLOB_UPLOAD_PATH percept-testdrive-app.zip
+                      upload-blob $BLOB_UPLOAD_PATH jwt-token-issuer.zip
+                    workingDirectory: "$(System.DefaultWorkingDirectory)/arm-deployment-bundle-percept"
