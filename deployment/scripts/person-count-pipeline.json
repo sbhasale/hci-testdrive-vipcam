@@ -3,11 +3,11 @@
     "name": "PipelinePersonCount",
     "properties": {
         "topologyName": "InferencingWithPersonCount",
-        "description": "Sample pipeline description",
+        "description": "People Count Pipeline",
         "parameters": [
             {
                 "name": "rtspUrl",
-                "value": "rtsp://localhost:8554/vipcam"
+                "value": "rtsp://vipcam:8554/vipcam"
             },
             {
                 "name": "rtspUserName",
