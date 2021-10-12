@@ -877,7 +877,7 @@
                     "[variables('webappName')]"
                   ],
                   "properties": {
-                    "packageUri": "[uri('https://unifiededgescenarios.blob.core.windows.net/arm-template/azure-percept-testdrive/latest/','vipcam-app-test.zip')]"
+                    "packageUri": "[uri('https://unifiededgescenarios.blob.core.windows.net/arm-template/azure-percept-testdrive/latest/','percept-testdrive-app-vipcam.zip')]"
                   }
                 }
               ]
