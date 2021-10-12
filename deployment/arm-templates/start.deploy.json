@@ -42,7 +42,6 @@
     }
   },
   "variables": {
-    "_artifactsLocation": "https://storageavanalyzer.blob.core.windows.net/avademo2/",
     "Depolymentjsonprefix": "deployment.ava_spatialAnalysis",
     "_artifactsLocationSasToken": "",
     "location": "[deployment().location]",
