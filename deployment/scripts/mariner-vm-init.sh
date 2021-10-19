@@ -70,7 +70,7 @@ sudo mkdir -p /home/localedgeuser/samples
 sudo mkdir -p /home/localedgeuser/samples/input
 
 
-sudo curl "https://unifiededgescenarios.blob.core.windows.net/static-assets/cafeteria.mkv" --output /home/localedgeuser/samples/input/cafeteria.mkv 
+sudo curl "https://unifiededgescenarios.blob.core.windows.net/arm-template/azure-percept-testdrive/latest/cafeteria.mkv" --output /home/localedgeuser/samples/input/cafeteria-small.mkv 
 
 # give the local user access
 sudo chown -R localedgeuser:localedgegroup /home/localedgeuser/
