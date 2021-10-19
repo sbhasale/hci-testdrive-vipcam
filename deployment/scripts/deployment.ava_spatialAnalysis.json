@@ -72,7 +72,7 @@
                       "restartPolicy": "always",
                       "settings": {
                           "image": "$VIPCAM_REGISTRY_USERNAME_myacr.azurecr.io/vipcam",
-                          "createOptions": "{\"Env\":[\"VIPCAM_VIDEO_FILE_PATH=file:///vipcamvideos/*.mkv\"],\"HostConfig\":{\"Binds\":[\"$VIDEO_INPUT_FOLDER_ON_DEVICE:/vipcamvideos/\"],\"PortBindings\":{\"8554/tcp\":[{\"HostPort\":\"8554\"}]}}}"
+                          "createOptions": "{\"Env\":[\"VIPCAM_VIDEO_FILE_PATH=file:///vipcamvideos/cafeteria.mkv\"],\"HostConfig\":{\"PortBindings\":{\"8554/tcp\":[{\"HostPort\":\"8554\"}]}}}"
                       }
                   },
                     "videoDownloader": {
