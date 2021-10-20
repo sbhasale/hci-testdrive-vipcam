@@ -65,7 +65,7 @@ sudo groupadd -g 1010 localedgegroup
 sudo useradd --home-dir /home/localedgeuser --uid 1010 --gid 1010 localedgeuser
 sudo mkdir -p /home/localedgeuser
 
-# create folders to be used by the vipcam module
+# create folders to be used by the rtspsim module
 sudo mkdir -p /home/localedgeuser/samples
 sudo mkdir -p /home/localedgeuser/samples/input
 
