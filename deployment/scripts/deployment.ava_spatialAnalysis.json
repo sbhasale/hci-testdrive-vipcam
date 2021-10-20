@@ -81,7 +81,7 @@
                       "status": "running",
                       "restartPolicy": "always",
                       "settings": {
-                        "image": "$CONTAINER_REGISTRY_USERNAME_myacr.azurecr.io/video-downloader:latest-mariner.nvidia",
+                        "image": "$CONTAINER_REGISTRY_USERNAME_myacr.azurecr.io/video-downloader:latest",
                         "createOptions": "{\"ExposedPorts\":{\"5678/tcp\":{}},\"HostConfig\":{\"Binds\":[\"$VIDEO_INPUT_FOLDER_ON_DEVICE:/vipcamvideos/\"],\"PortBindings\":{\"5678/tcp\":[{\"HostPort\":\"5678\"}]},\"DeviceRequests\":[{\"Capabilities\":[[\"gpu\"]],\"Count\":-1}]}}"
                       },
                       "env": {
