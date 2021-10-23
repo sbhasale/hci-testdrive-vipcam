@@ -70,7 +70,7 @@ sudo mkdir -p /home/localedgeuser/samples
 sudo mkdir -p /home/localedgeuser/samples/input
 
 
-sudo curl "https://unifiededgescenarios.blob.core.windows.net/static-assets/cafeteria.mkv" --output /home/localedgeuser/samples/input/video-vipcam.mkv 
+sudo curl "https://unifiededgescenarios.blob.core.windows.net/static-assets/cafeteria.mkv" --output /home/localedgeuser/samples/input/cafeteria.mkv 
 
 # give the local user access
 sudo chown -R localedgeuser:localedgegroup /home/localedgeuser/

@@ -71,8 +71,8 @@
                       "status": "running",
                       "restartPolicy": "always",
                       "settings": {
-                          "image": "$VIPCAM_REGISTRY_USERNAME_myacr.azurecr.io/vipcam-novideo",
-                          "createOptions": "{\"Env\":[\"VIPCAM_VIDEO_FILE_PATH=file:///vipcamvideos/video-vipcam.mkv\"],\"HostConfig\":{\"Binds\":[\"$VIDEO_INPUT_FOLDER_ON_DEVICE:/vipcamvideos/\"],\"PortBindings\":{\"8554/tcp\":[{\"HostPort\":\"8554\"}]}}}"
+                          "image": "$VIPCAM_REGISTRY_USERNAME_myacr.azurecr.io/vipcam-novideo-custom",
+                          "createOptions": "{\"Env\":[\"VIPCAM_VIDEO_FILE_PATH=/vipcamvideos/\"],\"HostConfig\":{\"Binds\":[\"$VIDEO_INPUT_FOLDER_ON_DEVICE:/vipcamvideos/\"],\"PortBindings\":{\"8554/tcp\":[{\"HostPort\":\"8554\"}]}}}"
                       },
                       "env": {
                         "GST_DEBUG": {
@@ -86,7 +86,7 @@
                       "status": "running",
                       "restartPolicy": "always",
                       "settings": {
-                        "image": "$VIPCAM_REGISTRY_USERNAME_myacr.azurecr.io/video-downloader-custom",
+                        "image": "$CONTAINER_REGISTRY_USERNAME_myacr.azurecr.io/video-downloader:latest",
                         "createOptions": "{\"ExposedPorts\":{\"5678/tcp\":{}},\"HostConfig\":{\"Binds\":[\"$VIDEO_INPUT_FOLDER_ON_DEVICE:/vipcamvideos/\"],\"PortBindings\":{\"5678/tcp\":[{\"HostPort\":\"5678\"}]},\"DeviceRequests\":[{\"Capabilities\":[[\"gpu\"]],\"Count\":-1}]}}"
                       },
                       "env": {

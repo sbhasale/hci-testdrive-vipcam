@@ -97,7 +97,7 @@
                 "zone": {
                   "@type": "#Microsoft.VideoAnalyzer.NamedPolygonString",
                   "polygon": "[[0.0,0.0],[0.0,1.0],[1.0,1.0],[1.0,0.0],[0.0,0.0]]",
-                  "name": "video-vipcam"
+                  "name": "cafeteria"
                 },
                 "events": [
                   {

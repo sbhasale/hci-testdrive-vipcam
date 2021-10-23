@@ -1,5 +1,5 @@
-FROM nvidia/cuda:11.2.0-devel-ubuntu18.04
-
+#FROM nvidia/cuda:11.2.0-devel-ubuntu18.04
+FROM nvidia/cuda:11.4.2-devel-ubuntu20.04
 WORKDIR /app
 
 ENV NVIDIA_DRIVER_CAPABILITIES=video,compute,utility
@@ -7,6 +7,11 @@ ARG DEBIAN_FRONTEND=noninteractive
 ENV TZ=America/Los_Angeles
 
 RUN apt-get update && apt-get install git build-essential yasm cmake libtool libc6 libc6-dev unzip curl wget libnuma1 libnuma-dev pkgconf python3-pip -y
+
+RUN apt-get install --reinstall ca-certificates \
+    && mkdir /usr/local/share/ca-certificates/cacert.org \
+    && wget -P /usr/local/share/ca-certificates/cacert.org http://www.cacert.org/certs/root.crt http://www.cacert.org/certs/class3.crt \
+    && update-ca-certificates
 
 RUN git clone https://git.videolan.org/git/ffmpeg/nv-codec-headers.git && \
     cd nv-codec-headers && make install PREFIX=/usr && cd -

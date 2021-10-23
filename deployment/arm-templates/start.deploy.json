@@ -860,7 +860,7 @@
                   "properties": {
                     "JWT_TOKEN": "[reference('deploy-video-analyzer-resources').outputs.jwtToken.value]",
                     "CLIENT_API_ENDPOINT_URL": "[reference('deploy-video-analyzer-resources').outputs.clientEndpointUrl.value]",
-                    "VIDEO_NAME": "video-vipcam",
+                    "VIDEO_NAME": "cafeteria",
                     "IOTHUB_CONNECTION_STRING": "[reference('deploy-iot-resources').outputs.connectionString.value]",
                     "DEVICE_NAME": "[variables('deviceName')]",
                     "WEBSITE_HTTPLOGGING_RETENTION_DAYS": "7",
