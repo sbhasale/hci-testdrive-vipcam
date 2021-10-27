@@ -65,7 +65,7 @@
         },
         {
             "type": "Microsoft.Resources/deploymentScripts",
-            "apiVersion": "2020-10-01",
+            "apiVersion": "2019-10-01-preview",
             "name": "Scriptforcopy",
             "dependsOn": [
                 "[variables('diskName')]"
@@ -80,7 +80,7 @@
             },
             "properties": {
                 "forceUpdateTag": "1",
-                "azCliVersion": "2.20.0",
+                "azCliVersion": "2.9.1",
                 "primaryScriptUri": "[concat('https://raw.githubusercontent.com/sbhasale/hci-testdrive-vipcam/main/deployment/scripts/','disk-setup.sh')]",
                 "environmentVariables": [
                     {
