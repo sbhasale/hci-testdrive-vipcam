@@ -18,8 +18,8 @@ CURRENT_DIRECTORY="$PWD"
 ##cd azcopy_linux*/
 ##cp azcopy /usr/bin/
 
-wget https://aka.ms/downloadazcopylinux64 -O azcopy-v7-linux.tar.gz 
-tar -xvf azcopy-v7-linux
+wget -O azcopy.tar.gz https://aka.ms/downloadazcopylinux64
+tar -xf azcopy.tar.gz
 cd azcopy*/azcopy/
 cp azcopy /usr/bin/
 cd "$CURRENT_DIRECTORY"
