@@ -7,9 +7,6 @@ info() {
     echo "$(date +"%Y-%m-%d %T") [INFO]"
 }
 
-# automatically install any extensions
-az config set extension.use_dynamic_install=yes_without_prompt
-
 CURRENT_DIRECTORY="$PWD"
 #wget https://aka.ms/downloadazcopy-v10-linux -O downloadazcopy-v10-linux
 wget https://azcopyvnext.azureedge.net/release20210920/azcopy_linux_amd64_10.12.2.tar.gz -O downloadazcopy-v10-linux
