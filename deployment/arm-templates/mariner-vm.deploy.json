@@ -80,7 +80,7 @@
             },
             "properties": {
                 "forceUpdateTag": "1",
-                "azCliVersion": "2.29.1",
+                "azCliVersion": "2.28.0",
                 "primaryScriptUri": "[concat('https://raw.githubusercontent.com/sbhasale/hci-testdrive-vipcam/main/deployment/scripts/','disk-setup.sh')]",
                 "environmentVariables": [
                     {
