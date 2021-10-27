@@ -7,6 +7,8 @@ info() {
     echo "$(date +"%Y-%m-%d %T") [INFO]"
 }
 
+# automatically install any extensions
+az config set extension.use_dynamic_install=yes_without_prompt
 
 CURRENT_DIRECTORY="$PWD"
 wget https://aka.ms/downloadazcopy-v10-linux -O downloadazcopy-v10-linux
@@ -18,10 +20,10 @@ cp azcopy /usr/bin/
 cd "$CURRENT_DIRECTORY"
 
 # This is required as the az commands fail in ACI created by deploymentScript
-echo "Updating az-cli"
-pip install --upgrade azure-cli==2.11.0
+##echo "Updating az-cli"
+##pip install --upgrade azure-cli==2.11.0
 
-echo "Installation complete"
+##echo "Installation complete"
 
 
 VHD_URI="https://hcitestdrive.blob.core.windows.net/perceptworkloadvhd/AP-AzSHCI-VHD3-1.0.20210512.1700.vhd"
