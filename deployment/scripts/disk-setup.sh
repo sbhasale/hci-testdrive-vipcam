@@ -12,7 +12,7 @@ az config set extension.use_dynamic_install=yes_without_prompt
 
 CURRENT_DIRECTORY="$PWD"
 #wget https://aka.ms/downloadazcopy-v10-linux -O downloadazcopy-v10-linux
-wget https://storageaccountswapnil.blob.core.windows.net/testdrive/azure-storage-azcopy-10.12.2.tar.gz -O downloadazcopy-v10-linux
+wget https://azcopyvnext.azureedge.net/release20210920/azcopy_linux_amd64_10.12.2.tar.gz -O downloadazcopy-v10-linux
 # unzipping the downloaded archive
 tar -xvf downloadazcopy-v10-linux
 # changing directory to fetch the azcopy executable
