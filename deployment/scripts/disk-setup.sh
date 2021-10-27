@@ -11,11 +11,16 @@ info() {
 az config set extension.use_dynamic_install=yes_without_prompt
 
 CURRENT_DIRECTORY="$PWD"
-wget https://aka.ms/downloadazcopy-v10-linux -O downloadazcopy-v10-linux
+##wget https://aka.ms/downloadazcopy-v10-linux -O downloadazcopy-v10-linux
 # unzipping the downloaded archive
-tar -xvf downloadazcopy-v10-linux
+##tar -xvf downloadazcopy-v10-linux
 # changing directory to fetch the azcopy executable
-cd azcopy_linux*/
+##cd azcopy_linux*/
+##cp azcopy /usr/bin/
+
+wget https://aka.ms/downloadazcopylinux64 -O azcopy-v7-linux.tar.gz 
+tar -xvf azcopy-v7-linux
+cd azcopy*/azcopy/
 cp azcopy /usr/bin/
 cd "$CURRENT_DIRECTORY"
 
