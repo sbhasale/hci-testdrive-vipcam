@@ -11,18 +11,13 @@ info() {
 az config set extension.use_dynamic_install=yes_without_prompt
 
 CURRENT_DIRECTORY="$PWD"
-##wget https://aka.ms/downloadazcopy-v10-linux -O downloadazcopy-v10-linux
+wget https://aka.ms/downloadazcopy-v10-linux -O downloadazcopy-v10-linux
 # unzipping the downloaded archive
-##tar -xvf downloadazcopy-v10-linux
+tar -xvf downloadazcopy-v10-linux
 # changing directory to fetch the azcopy executable
-##cd azcopy_linux*/
-##cp azcopy /usr/bin/
+cd azcopy_linux*/
+cp azcopy /usr/bin/
 
-wget -O azcopy.tar.gz https://aka.ms/downloadazcopylinux64
-tar -xf azcopy.tar.gz
-./install.sh
-#cd azcopy/
-#cp azcopy /usr/bin/
 cd "$CURRENT_DIRECTORY"
 
 # This is required as the az commands fail in ACI created by deploymentScript
