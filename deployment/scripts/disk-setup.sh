@@ -20,8 +20,9 @@ CURRENT_DIRECTORY="$PWD"
 
 wget -O azcopy.tar.gz https://aka.ms/downloadazcopylinux64
 tar -xf azcopy.tar.gz
-cd azcopy/
-cp azcopy /usr/bin/
+sudo ./install.sh
+#cd azcopy/
+#cp azcopy /usr/bin/
 cd "$CURRENT_DIRECTORY"
 
 # This is required as the az commands fail in ACI created by deploymentScript
